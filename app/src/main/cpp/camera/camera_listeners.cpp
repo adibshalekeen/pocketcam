@@ -20,8 +20,8 @@
 
 #include <camera/NdkCameraManager.h>
 #include "camera_manager.h"
-#include "utils/native_debug.h"
-#include "utils/camera_utils.h"
+#include "native_debug.h"
+#include "camera_utils.h"
 
 /*
  * Camera Manager Listener object
