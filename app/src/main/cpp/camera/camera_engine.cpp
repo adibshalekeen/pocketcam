@@ -21,7 +21,7 @@
 #include <cstdio>
 #include <cstring>
 #include "camera_engine.h"
-#include "utils/native_debug.h"
+#include "native_debug.h"
 
 CameraAppEngine::CameraAppEngine(JNIEnv* env, jobject instance, jint w, jint h)
     : env_(env),

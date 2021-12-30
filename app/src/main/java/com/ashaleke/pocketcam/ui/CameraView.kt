@@ -24,7 +24,7 @@ class CameraView(context: Context?,
     var cameraRenderer : CameraRenderer = CameraRenderer(cameraSurfaceAvailableListener)
 
     init {
-        setEGLContextClientVersion(2)
+        setEGLContextClientVersion(3)
         setRenderer(cameraRenderer)
     }
 }

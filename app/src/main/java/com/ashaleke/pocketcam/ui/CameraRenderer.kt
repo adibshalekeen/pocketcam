@@ -2,7 +2,7 @@ package com.ashaleke.pocketcam.ui
 
 import android.graphics.SurfaceTexture
 import android.opengl.GLES11Ext.GL_TEXTURE_EXTERNAL_OES
-import android.opengl.GLES20
+import android.opengl.GLES30
 import android.opengl.GLSurfaceView
 import android.view.Surface
 import javax.microedition.khronos.egl.EGLConfig
@@ -32,8 +32,8 @@ class CameraRenderer(val surfaceAvailableListener : CameraSurfaceAvailableListen
 
     override fun onSurfaceCreated(p0: GL10?, p1: EGLConfig?) {
         var textures : IntArray = IntArray(1)
-        GLES20.glGenTextures(1, textures, 0)
-        GLES20.glBindTexture(GL_TEXTURE_EXTERNAL_OES, textures[0])
+        GLES30.glGenTextures(1, textures, 0)
+        GLES30.glBindTexture(GL_TEXTURE_EXTERNAL_OES, textures[0])
 
         surfaceTexture = SurfaceTexture(textures[0])
         surfaceTexture.setOnFrameAvailableListener {
