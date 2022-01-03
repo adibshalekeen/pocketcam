@@ -6,7 +6,7 @@
 #define POCKETCAM_RENDERER_H
 
 #include <GLES3/gl3.h>
-#include <GLES3/gl3ext.h>
+#include <GLES2/gl2ext.h>
 
 #include "index_buffer.h"
 #include "vertex_array.h"
@@ -14,7 +14,7 @@
 
 class Renderer {
 public:
-    static void draw(const VertexArray& va, const IndexBuffer& ib, const Material& shader);
+    static void draw(VertexArray& va, IndexBuffer& ib, Material& shader);
     static void clear();
 };
 #endif //POCKETCAM_RENDERER_H

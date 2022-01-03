@@ -10,32 +10,34 @@
 
 class CameraPreviewMaterial : public Material {
 public:
-    CameraPreviewMaterial();
+    CameraPreviewMaterial(unsigned int textureID);
 
-    float* getVertices();
-    unsigned int getNumVertices();
-    unsigned int* getIndices();
-    unsigned int getNumIndices();
-    BufferLayout* getLayout();
-    void setUniformValues();
+    float* getVertices() const;
+    unsigned int getNumVertices() const;
+    unsigned int sizeofVertices() const;
+    unsigned int* getIndices() const;
+    unsigned int getNumIndices() const;
+    unsigned int sizeofIndices() const;
+    BufferLayout* getLayout() const;
+    void getDimensions(unsigned int dims[2]) const;
+    void bindUniformValues();
     void setDimensions(unsigned int width, unsigned int height);
+    void setTextureMatrix(float* textureMatrix);
 
 private:
-    unsigned int _width, _height;
+    unsigned int _width;
+    unsigned int _height;
+    GLuint _textureID;
     float _aspectRatio;
     float* _mvp;
+    float* _textureMatrix;
     BufferLayout* _layout;
-    float _vertices[20] {
-            -1, -1, 0, 0, 0,
-            -1, 1, 0, 0, 1,
-            1, 1, 0, 1, 1,
-            1, -1, 0, 1, 0
-    };
+
+    float* _vertices;
     unsigned int _numVertices = 4;
-    unsigned int _indices[6] = {
-            2, 1, 0,
-            0, 3, 2
-    };
+    unsigned int _elementsPerVertex = 5;
+
+    unsigned * _indices;
     unsigned int _numIndices = 6;
 };
 

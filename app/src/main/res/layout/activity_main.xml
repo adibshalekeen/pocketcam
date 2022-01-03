@@ -5,5 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
-
+<androidx.fragment.app.FragmentContainerView
+    android:id="@+id/camera_fragment"
+    android:name="com.ashaleke.pocketcam.ui.CameraFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

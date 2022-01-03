@@ -9,11 +9,12 @@
 #include <unordered_map>
 
 #include <GLES3/gl3.h>
-#include <GLES3/gl3ext.h>
+#include <GLES2/gl2ext.h>
 
 #include "basic_vertex_shader.h"
 #include "basic_fragment_shader.h"
 #include "vertex_buffer_layout.h"
+#include "utils.h"
 
 #include <native_debug.h>
 
@@ -23,58 +24,78 @@ public:
              const ShaderSource& vertexShaderSource,
              const ShaderSource& fragmentShaderSource) : _ready(true){
         _programID = glCreateProgram();
-        BasicVertexShader *vertexShader = new BasicVertexShader(vertexShaderSource.name,
+        _vertexShader = new BasicVertexShader(vertexShaderSource.name,
                                                                 vertexShaderSource.src);
-        BasicFragmentShader *fragmentShader = new BasicFragmentShader(fragmentShaderSource.name,
+        _fragmentShader = new BasicFragmentShader(fragmentShaderSource.name,
                                                                       fragmentShaderSource.src);
-        if(!vertexShader->isCompiled() || !fragmentShader->isCompiled())
+        if(!_programID || !_vertexShader->isCompiled() || !_fragmentShader->isCompiled())
         {
             LOGE("Couldn't load material %s", materialName);
             _ready = false;
         }
         else
         {
-            glAttachShader(_programID, vertexShader->getID());
-            glAttachShader(_programID, fragmentShader->getID());
-            glLinkProgram(_programID);
-
+            GLCALL(glAttachShader(_programID, _vertexShader->getID()));
+            GLCALL(glAttachShader(_programID, _fragmentShader->getID()));
+            GLCALL(glLinkProgram(_programID));
             GLint programLinked;
             glGetProgramiv(_programID, GL_LINK_STATUS, &programLinked);
             if(programLinked != GL_TRUE)
             {
-                GLsizei logLength = 0;
-                GLchar message[1024];
-                glGetProgramInfoLog(_programID, 1024, &logLength, message);
-                LOGE("Failed to link program within %s due to %s", materialName, message);
+                GLsizei linkLogLength = 0;
+                GLsizei returnedLinkLogLength = 0;
+                glGetProgramiv(_programID, GL_INFO_LOG_LENGTH, &linkLogLength);
+                GLchar message[linkLogLength];
+                glGetProgramInfoLog(_programID,
+                                    linkLogLength,
+                                    &returnedLinkLogLength,
+                                    message);
+                LOGE("Failed to link program %d within %s. Returned log length %d expected %d. Failed due to %s.",
+                     programLinked,
+                     materialName,
+                     returnedLinkLogLength,
+                     linkLogLength,
+                     message);
                 _ready = false;
             }
 
-            glValidateProgram(_programID);
+            GLCALL(glValidateProgram(_programID));
             GLint programValidated;
             glGetProgramiv(_programID, GL_VALIDATE_STATUS, &programValidated);
             if(programValidated != GL_TRUE)
             {
-                GLsizei logLength = 0;
-                GLchar message[1024];
-                glGetProgramInfoLog(_programID, 1024, &logLength, message);
-                LOGE("Failed to validate program within %s due to %s", materialName, message);
+                GLsizei validateLogLen = 0;
+                GLsizei returnedValidateLogLength = 0;
+                glGetProgramiv(_programID, GL_INFO_LOG_LENGTH, &validateLogLen);
+                GLchar validateLogMessage[validateLogLen];
+                glGetProgramInfoLog(_programID,
+                                    validateLogLen,
+                                    &returnedValidateLogLength,
+                                    validateLogMessage);
+                LOGE("Failed to validate program %d within %s. Returned log length %d expected %d. Failed due to %s.",
+                     validateLogLen,
+                     materialName,
+                     returnedValidateLogLength,
+                     validateLogLen,
+                     validateLogMessage);
                 _ready = false;
             }
         }
-        glDeleteShader(vertexShader->getID());
-        glDeleteShader(fragmentShader->getID());
+        GLCALL(glDeleteShader(_vertexShader->getID()));
+        GLCALL(glDeleteShader(_fragmentShader->getID()));
     }
 
     ~Material(){
-        this->unbind();
-        glDeleteProgram(_programID);
+        unbind();
+        GLCALL(glDeleteProgram(_programID));
     }
 
     void bind() const {
-        glUseProgram(_programID);
+        GLCALL(glUseProgram(_programID));
     }
+
     void unbind() const {
-        glUseProgram(0);
+        GLCALL(glUseProgram(0));
     }
 
     bool isReady() const {
@@ -89,6 +110,10 @@ public:
         return 0;
     }
 
+    virtual unsigned int sizeofVertices() const {
+        return 0;
+    }
+
     virtual unsigned int* getIndices() const {
         return NULL;
     }
@@ -97,17 +122,50 @@ public:
         return 0;
     }
 
+    virtual unsigned int sizeofIndices() const {
+        return 0;
+    }
+
     virtual BufferLayout* getLayout() const {
         return NULL;
     }
-    virtual void setUniformValues() const {}
+
+    virtual void getDimensions(unsigned int dims[2]) const {
+        dims = NULL;
+    }
+
+    virtual void bindUniformValues() {}
     virtual void setDimensions(unsigned int width, unsigned int height) {}
+
+    GLuint getProgramID() const {
+        return _programID;
+    }
+
+    GLuint getUniformLocation(const std::string& name)
+    {
+        if(_uniformLocationCache.find(name) != _uniformLocationCache.end())
+        {
+            return _uniformLocationCache[name];
+        }
+
+        GLuint location = glGetUniformLocation(_programID, name.c_str());
+        if(location == -1)
+        {
+            LOGE("No active uniforms with name %s", name.c_str());
+        }
+        else
+        {
+            _uniformLocationCache[name] = location;
+        }
+        return location;
+    }
 
 private:
     unsigned int _programID;
     bool _ready;
     std::unordered_map<std::string, GLint> _uniformLocationCache;
-    int GetUniformLocation(const std::string& name);
+    BasicVertexShader* _vertexShader;
+    BasicFragmentShader* _fragmentShader;
 };
 
 
