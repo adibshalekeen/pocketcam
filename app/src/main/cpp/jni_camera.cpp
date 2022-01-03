@@ -49,9 +49,9 @@ CameraAppEngine *pEngineObj = nullptr;
  */
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_ashaleke_pocketcam_NDKCamera_createCamera(JNIEnv *env,
-                                                   jobject instance,
-                                                   jint width,
-                                                   jint height) {
+                       jobject instance,
+                       jint width,
+                       jint height) {
     pEngineObj = new CameraAppEngine(env, instance, width, height);
     return reinterpret_cast<jlong>(pEngineObj);
 }
@@ -63,8 +63,8 @@ Java_com_ashaleke_pocketcam_NDKCamera_createCamera(JNIEnv *env,
  */
 extern "C" JNIEXPORT void JNICALL
 Java_com_ashaleke_pocketcam_NDKCamera_deleteCamera(JNIEnv *env,
-                                                   jobject instance,
-                                                   jlong ndkCameraObj) {
+                       jobject instance,
+                       jlong ndkCameraObj) {
     if (!pEngineObj || !ndkCameraObj) {
         return;
     }
@@ -90,8 +90,8 @@ Java_com_ashaleke_pocketcam_NDKCamera_deleteCamera(JNIEnv *env,
  */
 extern "C" JNIEXPORT jobject JNICALL
 Java_com_ashaleke_pocketcam_NDKCamera_getMinimumCompatiblePreviewSize(JNIEnv *env,
-                                                                      jobject instance,
-                                                                      jlong ndkCameraObj) {
+                                          jobject instance,
+                                          jlong ndkCameraObj) {
     if (!ndkCameraObj) {
         return nullptr;
     }
@@ -111,8 +111,8 @@ Java_com_ashaleke_pocketcam_NDKCamera_getMinimumCompatiblePreviewSize(JNIEnv *en
  */
 extern "C" JNIEXPORT jint JNICALL
 Java_com_ashaleke_pocketcam_NDKCamera_getCameraSensorOrientation(JNIEnv *env,
-                                                                 jobject instance,
-                                                                 jlong ndkCameraObj) {
+                                     jobject instance,
+                                     jlong ndkCameraObj) {
     ASSERT(ndkCameraObj, "NativeObject should not be null Pointer");
     CameraAppEngine *pApp = reinterpret_cast<CameraAppEngine *>(ndkCameraObj);
     return pApp->GetCameraSensorOrientation(ACAMERA_LENS_FACING_BACK);
@@ -126,9 +126,9 @@ Java_com_ashaleke_pocketcam_NDKCamera_getCameraSensorOrientation(JNIEnv *env,
  */
 extern "C" JNIEXPORT void JNICALL
 Java_com_ashaleke_pocketcam_NDKCamera_onPreviewSurfaceCreated(JNIEnv *env,
-                                                              jobject instance,
-                                                              jlong ndkCameraObj,
-                                                              jobject surface) {
+                                  jobject instance,
+                                  jlong ndkCameraObj,
+                                  jobject surface) {
     ASSERT(ndkCameraObj && (jlong)pEngineObj == ndkCameraObj,
     "NativeObject should not be null Pointer");
     CameraAppEngine *pApp = reinterpret_cast<CameraAppEngine *>(ndkCameraObj);
@@ -144,9 +144,9 @@ Java_com_ashaleke_pocketcam_NDKCamera_onPreviewSurfaceCreated(JNIEnv *env,
  */
 extern "C" JNIEXPORT void JNICALL
 Java_com_ashaleke_pocketcam_NDKCamera_onPreviewSurfaceDestroyed(JNIEnv *env,
-                                                                jobject instance,
-                                                                jlong ndkCameraObj,
-                                                                jobject surface) {
+                                    jobject instance,
+                                    jlong ndkCameraObj,
+                                    jobject surface) {
     CameraAppEngine *pApp = reinterpret_cast<CameraAppEngine *>(ndkCameraObj);
     ASSERT(ndkCameraObj && pEngineObj == pApp,
     "NativeObject should not be null Pointer");
