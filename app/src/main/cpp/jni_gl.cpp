@@ -4,6 +4,11 @@
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
 
+#include "camera_preview.h"
+#include "native_debug.h"
+
+CameraPreview* CAMERA_PREVIEW;
+
 extern "C" {
     JNIEXPORT void JNICALL
     Java_com_ashaleke_pocketcam_ui_CameraRenderer_onSurfaceCreated(JNIEnv *env,
@@ -11,7 +16,8 @@ extern "C" {
                                     jint texId,
                                     jobject surface)
     {
-
+        CAMERA_PREVIEW = new CameraPreview(texId);
+        LOGD("Camera preview surface initialized");
     }
 
     JNIEXPORT void JNICALL
@@ -20,14 +26,54 @@ extern "C" {
                                     jint w,
                                     jint h)
     {
+        if(!CAMERA_PREVIEW)
+        {
+            LOGE("Attempting to change surface dimensions without intializing surface");
+            return;
+        }
 
+        CAMERA_PREVIEW->onSurfaceChanged(w, h);
     }
 
     JNIEXPORT void JNICALL
     Java_com_ashaleke_pocketcam_ui_CameraRenderer_onDrawFrame(JNIEnv *env,
-                               jobject,
-                               jfloatArray texMatArray)
+                               jobject)
     {
+        if(!CAMERA_PREVIEW)
+        {
+            LOGE("Attempting to draw frame without initializing surface");
+            return;
+        }
 
+        CAMERA_PREVIEW->onDrawFrame();
+    }
+
+    JNIEXPORT void JNICALL
+    Java_com_ashaleke_pocketcam_ui_CameraRenderer_setTextureMatrix(JNIEnv *env,
+                                                                   jobject,
+                                                                   jfloatArray matrix)
+    {
+        if(!CAMERA_PREVIEW)
+        {
+            LOGE("Attempting to set texture matrix before surface initialization");
+            return;
+        }
+
+        unsigned int matLen = env->GetArrayLength(matrix);
+        if(matLen != 16)
+        {
+            LOGE("Invalid array supplied as texture matrix array. Array has size %d, expected 16",
+                 matLen);
+            return;
+        }
+
+        float textureMatrix[16];
+        float* JNImatrix = env->GetFloatArrayElements(matrix, NULL);
+        for(int i=0; i < matLen; ++i)
+        {
+            textureMatrix[i] = JNImatrix[i];
+        }
+
+        CAMERA_PREVIEW->setTextureMatrix(textureMatrix);
     }
 }

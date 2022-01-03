@@ -26,6 +26,8 @@ class CameraRenderer(val surfaceAvailableListener : CameraSurfaceAvailableListen
     // Boolean field toggled when new frame is ready for drawing
     @Volatile
     var frameAvailable : Boolean = false
+    @Volatile
+    var textureMatrixUpdateRequired : Boolean = true
 
     // Thread lock protecting frameAvailable
     val FRAME_LOCK = Object()
@@ -46,7 +48,7 @@ class CameraRenderer(val surfaceAvailableListener : CameraSurfaceAvailableListen
         surface = Surface(surfaceTexture)
 
         onSurfaceCreated(textures[0], surface)
-
+        textureMatrixUpdateRequired = true
         surfaceAvailableListener.onSurfaceAvailable()
     }
 
@@ -60,14 +62,40 @@ class CameraRenderer(val surfaceAvailableListener : CameraSurfaceAvailableListen
             if(frameAvailable)
             {
                 surfaceTexture.updateTexImage()
-                surfaceTexture.getTransformMatrix(texMatrix)
+                setTextureMatrix()
                 frameAvailable = true
             }
-            onDrawFrame(texMatrix)
+            onDrawFrame()
         }
     }
 
+    fun invalidateTextureMatrix()
+    {
+        synchronized(FRAME_LOCK)
+        {
+            textureMatrixUpdateRequired = true
+        }
+    }
+
+    fun setTextureMatrix()
+    {
+        var updateRequired : Boolean
+        synchronized(FRAME_LOCK)
+        {
+            updateRequired = textureMatrixUpdateRequired
+        }
+        if(updateRequired)
+        {
+            surfaceTexture.getTransformMatrix(texMatrix)
+            setTextureMatrix(texMatrix)
+            synchronized(FRAME_LOCK)
+            {
+                textureMatrixUpdateRequired = false
+            }
+        }
+    }
     external fun onSurfaceCreated(textureId: Int, surface: Surface)
     external fun onSurfaceChanged(width: Int, height: Int)
-    external fun onDrawFrame(texMat: FloatArray)
+    external fun onDrawFrame()
+    external fun setTextureMatrix(textureMatrix : FloatArray)
 }

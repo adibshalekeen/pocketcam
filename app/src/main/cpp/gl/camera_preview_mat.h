@@ -14,8 +14,10 @@ public:
 
     float* getVertices();
     unsigned int getNumVertices();
+    unsigned int sizeofVertices();
     unsigned int* getIndices();
     unsigned int getNumIndices();
+    unsigned int sizeofIndices();
     BufferLayout* getLayout();
     void setUniformValues();
     void setDimensions(unsigned int width, unsigned int height);

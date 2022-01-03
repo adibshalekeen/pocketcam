@@ -89,11 +89,19 @@ public:
         return 0;
     }
 
+    virtual unsigned int sizeofVertices() const {
+        return 0;
+    }
+
     virtual unsigned int* getIndices() const {
         return NULL;
     }
 
     virtual unsigned int getNumIndices() const {
+        return 0;
+    }
+
+    virtual unsigned int sizeofIndices() const {
         return 0;
     }
 

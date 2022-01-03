@@ -89,12 +89,20 @@ unsigned int CameraPreviewMaterial::getNumVertices() {
     return _numVertices;
 }
 
+unsigned int CameraPreviewMaterial::sizeofVertices() {
+    return sizeof(_vertices);
+}
+
 unsigned int* CameraPreviewMaterial::getIndices() {
     return _indices;
 }
 
 unsigned int CameraPreviewMaterial::getNumIndices() {
     return _numIndices;
+}
+
+unsigned int CameraPreviewMaterial::sizeofIndices() {
+    return sizeof(_indices);
 }
 
 BufferLayout* CameraPreviewMaterial::getLayout() {

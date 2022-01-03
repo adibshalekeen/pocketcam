@@ -27,4 +27,9 @@ class CameraView(context: Context?,
         setEGLContextClientVersion(3)
         setRenderer(cameraRenderer)
     }
+
+    fun changeResolution()
+    {
+        cameraRenderer.invalidateTextureMatrix()
+    }
 }
