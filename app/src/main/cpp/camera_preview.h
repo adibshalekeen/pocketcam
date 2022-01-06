@@ -6,7 +6,7 @@
 #define POCKETCAM_CAMERA_PREVIEW_H
 
 #include <GLES3/gl3.h>
-#include <GLES3/gl3ext.h>
+#include <GLES2/gl2ext.h>
 
 #include "gl/renderer.h"
 #include "gl/camera_preview_mat.h"
@@ -16,11 +16,10 @@
 
 class CameraPreview {
 public:
-    CameraPreview(GLuint texID);
+    CameraPreview(unsigned int texID);
     void onSurfaceChanged(unsigned int w, unsigned int h);
     void onDrawFrame();
-    void setTextureMatrix(float texMat[16]);
-
+    void setTextureMatrix(float* texMatrix);
 private:
     GLuint _textureID;
     unsigned int _width, _height;
@@ -28,7 +27,7 @@ private:
     IndexBuffer* _ib;
     VertexArray* _va;
     float _textMatrix[16];
-    Material* _cameraPreviewMaterial;
+    CameraPreviewMaterial* _cameraPreviewMaterial;
 };
 
 

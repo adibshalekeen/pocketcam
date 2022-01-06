@@ -7,17 +7,15 @@ import android.view.TextureView
 import com.ashaleke.pocketcam.ui.listeners.CameraSurfaceAvailableListener
 
 class CameraView(context: Context?,
-                 attrs: AttributeSet?,
-                 var surfaceAvailableListener: TextureView.SurfaceTextureListener?) : GLSurfaceView(context, attrs) {
+                 attrs: AttributeSet?) : GLSurfaceView(context, attrs) {
+    var surfaceAvailableListener: TextureView.SurfaceTextureListener? = null
     var surfaceAvailable : Boolean = false
 
     val cameraSurfaceAvailableListener : CameraSurfaceAvailableListener =
         object : CameraSurfaceAvailableListener {
             override fun onSurfaceAvailable() {
                 surfaceAvailable = true
-                surfaceAvailableListener?.onSurfaceTextureAvailable(cameraRenderer.surfaceTexture,
-                                                                    getWidth(),
-                                                                    getHeight())
+                notifySurfaceAvailable()
             }
         }
 
@@ -31,5 +29,21 @@ class CameraView(context: Context?,
     fun changeResolution()
     {
         cameraRenderer.invalidateTextureMatrix()
+    }
+
+    fun setOnSurfaceAvailableListener(listener : TextureView.SurfaceTextureListener)
+    {
+        surfaceAvailableListener = listener
+        if(surfaceAvailable)
+        {
+            notifySurfaceAvailable()
+        }
+    }
+
+    private fun notifySurfaceAvailable()
+    {
+        surfaceAvailableListener?.onSurfaceTextureAvailable(cameraRenderer.surfaceTexture,
+            getWidth(),
+            getHeight())
     }
 }

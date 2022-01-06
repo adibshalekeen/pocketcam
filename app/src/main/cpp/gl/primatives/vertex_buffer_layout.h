@@ -6,7 +6,7 @@
 #define POCKETCAM_VERTEX_BUFFER_LAYOUT_H
 
 #include <GLES3/gl3.h>
-#include <GLES3/gl3ext.h>
+#include <GLES2/gl2ext.h>
 #include <vector>
 
 struct BufferLayoutElement {

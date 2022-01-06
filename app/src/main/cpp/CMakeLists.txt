@@ -24,7 +24,9 @@ file(GLOB gl_primatives_src "${CMAKE_CURRENT_SOURCE_DIR}/gl/primatives/*.cpp")
 
 add_library(pocketcam
             SHARED
-            ${jni_src}
+            ${CMAKE_CURRENT_SOURCE_DIR}/camera_preview.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/jni_camera.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/jni_gl.cpp
             ${camera_src}
             ${camera_common_src}
             ${gl_src}

@@ -4,7 +4,9 @@ import android.graphics.SurfaceTexture
 import android.opengl.GLES11Ext.GL_TEXTURE_EXTERNAL_OES
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
+import android.util.Log
 import android.view.Surface
+import com.ashaleke.pocketcam.Constants
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
@@ -14,6 +16,9 @@ import com.ashaleke.pocketcam.ui.listeners.CameraSurfaceAvailableListener
  * Renderer used to draw camera frames to CameraView GLSurfaceView
  * */
 class CameraRenderer(val surfaceAvailableListener : CameraSurfaceAvailableListener) : GLSurfaceView.Renderer {
+    // Logcat tag
+    val TAG = Constants.APP_TAG + ":CameraRenderer"
+
     // Texture drawn onto surface
     lateinit var surfaceTexture : SurfaceTexture
 
@@ -47,6 +52,7 @@ class CameraRenderer(val surfaceAvailableListener : CameraSurfaceAvailableListen
 
         surface = Surface(surfaceTexture)
 
+        Log.e(TAG, "Renderer calling on surface created")
         onSurfaceCreated(textures[0], surface)
         textureMatrixUpdateRequired = true
         surfaceAvailableListener.onSurfaceAvailable()

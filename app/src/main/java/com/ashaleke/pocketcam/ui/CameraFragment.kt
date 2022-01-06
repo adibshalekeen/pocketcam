@@ -17,7 +17,7 @@ private const val ARG_PARAM2 = "param2"
  * Use the [CameraFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class CameraFragment : Fragment() {
+class CameraFragment : Fragment(R.layout.fragment_camera) {
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null

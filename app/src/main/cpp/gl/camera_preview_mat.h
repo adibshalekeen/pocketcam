@@ -10,7 +10,7 @@
 
 class CameraPreviewMaterial : public Material {
 public:
-    CameraPreviewMaterial();
+    CameraPreviewMaterial(unsigned int textureID);
 
     float* getVertices();
     unsigned int getNumVertices();
@@ -21,11 +21,15 @@ public:
     BufferLayout* getLayout();
     void setUniformValues();
     void setDimensions(unsigned int width, unsigned int height);
+    void setTextureMatrix(float* textureMatrix);
 
 private:
-    unsigned int _width, _height;
+    unsigned int _width;
+    unsigned int _height;
+    GLuint _textureID;
     float _aspectRatio;
     float* _mvp;
+    float* _textureMatrix;
     BufferLayout* _layout;
     float _vertices[20] {
             -1, -1, 0, 0, 0,

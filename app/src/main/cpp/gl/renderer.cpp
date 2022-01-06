@@ -3,9 +3,12 @@
 //
 
 #include "renderer.h"
+#include "native_debug.h"
 
 void Renderer::draw(const VertexArray& va, const IndexBuffer& ib, const Material& mat){
+    clear();
     va.bind();
+    glUseProgram(mat.getProgramID());
     ib.bind();
     mat.bind();
 
@@ -15,5 +18,6 @@ void Renderer::draw(const VertexArray& va, const IndexBuffer& ib, const Material
 }
 
 void Renderer::clear(){
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClearColor(0, 0, 0, 1);
 }
