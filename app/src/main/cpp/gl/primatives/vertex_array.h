@@ -9,6 +9,7 @@
 #include <GLES2/gl2ext.h>
 
 #include "vertex_buffer_layout.h"
+#include "vertex_buffer.h"
 
 class VertexArray {
 public:
@@ -16,7 +17,7 @@ public:
     ~VertexArray();
     void bind() const;
     void unbind() const;
-    void setLayout(BufferLayout layout);
+    void setLayout(VertexBuffer &vb, BufferLayout layout);
 private:
     GLuint _ID;
 };

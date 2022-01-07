@@ -35,10 +35,9 @@ public:
         }
         else
         {
-            GLCALL( glAttachShader(_programID, vertexShader->getID()));
+            GLCALL(glAttachShader(_programID, vertexShader->getID()));
             GLCALL(glAttachShader(_programID, fragmentShader->getID()));
-            glLinkProgram(_programID);
-
+            GLCALL(glLinkProgram(_programID));
             GLint programLinked;
             glGetProgramiv(_programID, GL_LINK_STATUS, &programLinked);
             if(programLinked != GL_TRUE)
@@ -60,7 +59,7 @@ public:
                 _ready = false;
             }
 
-            glValidateProgram(_programID);
+            GLCALL(glValidateProgram(_programID));
             GLint programValidated;
             glGetProgramiv(_programID, GL_VALIDATE_STATUS, &programValidated);
             if(programValidated != GL_TRUE)
@@ -82,20 +81,21 @@ public:
                 _ready = false;
             }
         }
-        glDeleteShader(vertexShader->getID());
-        glDeleteShader(fragmentShader->getID());
+        GLCALL(glDeleteShader(vertexShader->getID()));
+        GLCALL(glDeleteShader(fragmentShader->getID()));
     }
 
     ~Material(){
-        this->unbind();
-        glDeleteProgram(_programID);
+        unbind();
+        GLCALL(glDeleteProgram(_programID));
     }
 
     void bind() const {
-        glUseProgram(_programID);
+        GLCALL(glUseProgram(_programID));
     }
+
     void unbind() const {
-        glUseProgram(0);
+        GLCALL(glUseProgram(0));
     }
 
     bool isReady() const {
@@ -129,8 +129,14 @@ public:
     virtual BufferLayout* getLayout() const {
         return NULL;
     }
-    virtual void setUniformValues() const {}
+
+    virtual void getDimensions(unsigned int dims[2]) const {
+        dims = NULL;
+    }
+
+    virtual void bindUniformValues() {}
     virtual void setDimensions(unsigned int width, unsigned int height) {}
+
     GLuint getProgramID() const {
         return _programID;
     }
@@ -153,7 +159,6 @@ public:
         }
         return location;
     }
-
 
 private:
     unsigned int _programID;

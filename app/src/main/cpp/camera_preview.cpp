@@ -5,19 +5,22 @@
 #include "camera_preview.h"
 
 CameraPreview::CameraPreview(unsigned int texID) {
-
     _textureID = texID;
-    _vb = new VertexBuffer();
-    _ib = new IndexBuffer();
-    _va = new VertexArray();
-
     _cameraPreviewMaterial = new CameraPreviewMaterial(texID);
 
+    _va = new VertexArray();
+
+    _vb = new VertexBuffer();
+    _vb->bind();
     _vb->setData((void *)_cameraPreviewMaterial->getVertices(),
                  _cameraPreviewMaterial->sizeofVertices());
+
+    _ib = new IndexBuffer();
+    _ib->bind();
     _ib->setData(_cameraPreviewMaterial->getIndices(),
                  _cameraPreviewMaterial->getNumIndices());
-    _va->setLayout(*_cameraPreviewMaterial->getLayout());
+
+    _va->setLayout(*_vb, *_cameraPreviewMaterial->getLayout());
 }
 
 void CameraPreview::onSurfaceChanged(unsigned int w, unsigned int h) {

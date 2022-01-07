@@ -14,7 +14,7 @@
 
 class Renderer {
 public:
-    static void draw(const VertexArray& va, const IndexBuffer& ib, const Material& shader);
+    static void draw(VertexArray& va, IndexBuffer& ib, Material& shader);
     static void clear();
 };
 #endif //POCKETCAM_RENDERER_H

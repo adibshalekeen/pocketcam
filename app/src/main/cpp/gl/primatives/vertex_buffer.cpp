@@ -3,24 +3,25 @@
 //
 
 #include "vertex_buffer.h"
+#include "utils.h"
 
 VertexBuffer::VertexBuffer() : _ID(0) {
-    glGenBuffers(1, &_ID);
+    GLCALL(glGenBuffers(1, &_ID));
 }
 
 VertexBuffer::~VertexBuffer() {
-    this->unbind();
-    glDeleteBuffers(1, &_ID);
+    unbind();
+    GLCALL(glDeleteBuffers(1, &_ID));
 }
 
 void VertexBuffer::bind() const {
-    glBindBuffer(GL_ARRAY_BUFFER, _ID);
+    GLCALL(glBindBuffer(GL_ARRAY_BUFFER, _ID));
 }
 
 void VertexBuffer::unbind() const {
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GLCALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
 }
 
 void VertexBuffer::setData(void *data, GLuint size) {
-    glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+    GLCALL(glBufferData(GL_ARRAY_BUFFER, size, data, GL_DYNAMIC_DRAW));
 }

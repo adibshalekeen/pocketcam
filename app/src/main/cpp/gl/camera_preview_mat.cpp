@@ -27,13 +27,13 @@ const char* FRAGMENT_SHADER_CODE = R"(
         #extension GL_OES_EGL_image_external_essl3: require
         precision mediump float;
         in vec2 texPos;
+        out vec4 FragColor;
         uniform samplerExternalOES texSampler;
         uniform vec2 viewSize;
-        out vec4 FragColor;
         void main()
         {
             //FragColor = texture(texSampler, texPos);
-            FragColor = vec4(0.25, 1, 0, 1);
+            FragColor = vec4(0.0, 0.0, 1.0, 1.0);
         }
     )";
 const ShaderSource VERTEX_SHADER_SOURCE = { VERTEX_SHADER_NAME, VERTEX_SHADER_CODE };
@@ -50,7 +50,6 @@ static void orthographicProjection(float mvp[16],
     float rl = r - l;
     float tb = t - b;
     float fn = f - n;
-
     mvp[0] = 2 / rl;
     mvp[12] = (r + l) / rl;
 
@@ -76,7 +75,7 @@ CameraPreviewMaterial::CameraPreviewMaterial(unsigned int textureID)  : Material
             0, 0, 1.0f, 0,
             0, 0, 0, 1.0f
     };
-
+    _textureID = textureID;
     //Configure camera frame texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_EXTERNAL_OES, _textureID);
@@ -84,33 +83,44 @@ CameraPreviewMaterial::CameraPreviewMaterial(unsigned int textureID)  : Material
     glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    _vertices = new float[] {
+            -1, -1, 0, 0, 0,
+            -1, 1, 0, 0, 1,
+            1, 1, 0, 1, 1,
+            1, -1, 0, 1, 0
+    };
+    _indices = new unsigned int[] {
+            2, 1, 0,
+            0, 3, 2
+    };
 }
 
-float* CameraPreviewMaterial::getVertices() {
+float* CameraPreviewMaterial::getVertices() const {
     return _vertices;
 }
 
-unsigned int CameraPreviewMaterial::getNumVertices() {
+unsigned int CameraPreviewMaterial::getNumVertices() const {
     return _numVertices;
 }
 
-unsigned int CameraPreviewMaterial::sizeofVertices() {
-    return sizeof(_vertices);
+unsigned int CameraPreviewMaterial::sizeofVertices() const {
+    return _numVertices * _elementsPerVertex * sizeof(GL_FLOAT);
 }
 
-unsigned int* CameraPreviewMaterial::getIndices() {
+unsigned int* CameraPreviewMaterial::getIndices() const {
     return _indices;
 }
 
-unsigned int CameraPreviewMaterial::getNumIndices() {
+unsigned int CameraPreviewMaterial::getNumIndices() const {
     return _numIndices;
 }
 
-unsigned int CameraPreviewMaterial::sizeofIndices() {
+unsigned int CameraPreviewMaterial::sizeofIndices() const {
     return sizeof(_indices);
 }
 
-BufferLayout* CameraPreviewMaterial::getLayout() {
+BufferLayout* CameraPreviewMaterial::getLayout() const {
     return _layout;
 }
 
@@ -134,30 +144,40 @@ void CameraPreviewMaterial::setDimensions(unsigned int width, unsigned int heigh
     {
         orthographicProjection(_mvp, -_aspectRatio, _aspectRatio, -1.0f, 1.0f, -1.0f, 1.0f);
     }
+
+    for(int i = 0; i < 4; ++i)
+    {
+        LOGE("%2.6f %2.6f %2.6f %2.6f", _mvp[i * 4 + 0], _mvp[i * 4 + 1], _mvp[i * 4 + 2], _mvp[i * 4 + 3]);
+    }
 }
 
-void CameraPreviewMaterial::setUniformValues() {
-    GLuint mvpMatrix = this->getUniformLocation("mvp");
+void CameraPreviewMaterial::getDimensions(unsigned int dims[2]) const {
+    dims[0] = _width;
+    dims[1] = _height;
+}
+
+void CameraPreviewMaterial::bindUniformValues() {
+    GLuint mvpMatrix = getUniformLocation("mvp");
     if(mvpMatrix != -1)
     {
-        glUniformMatrix4fv(mvpMatrix, 1, false, _mvp);
+        GLCALL(glUniformMatrix4fv(mvpMatrix, 1, false, _mvp));
     }
-    GLuint texMatrix = this->getUniformLocation("texMatrix");
+    GLuint texMatrix = getUniformLocation("texMatrix");
     if(texMatrix != -1)
     {
-        glUniformMatrix4fv(texMatrix, 1, false, _textureMatrix);
+        GLCALL(glUniformMatrix4fv(texMatrix, 1, false, _textureMatrix));
     }
-    GLuint texSampler = this->getUniformLocation("texSampler");
-    if(texSampler != -1)
-    {
-        glUniform1i(texSampler, 0);
-    }
-    GLuint viewSize = this->getUniformLocation("viewSize");
+//    GLuint texSampler = getUniformLocation("texSampler");
+//    if(texSampler != -1)
+//    {
+//        GLCALL(glUniform1i(texSampler, 0));
+//    }
+    GLuint viewSize = getUniformLocation("viewSize");
     if(viewSize != -1)
     {
-        glUniform2f(viewSize, _width, _height);
+        GLCALL(glUniform2f(viewSize, _width, _height));
     }
-    glBindTexture(GL_TEXTURE_EXTERNAL_OES, _textureID);
+    GLCALL(glBindTexture(GL_TEXTURE_EXTERNAL_OES, _textureID));
 }
 
 void CameraPreviewMaterial::setTextureMatrix(float *textureMatrix) {
