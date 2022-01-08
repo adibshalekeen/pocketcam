@@ -24,19 +24,19 @@ public:
              const ShaderSource& vertexShaderSource,
              const ShaderSource& fragmentShaderSource) : _ready(true){
         _programID = glCreateProgram();
-        BasicVertexShader *vertexShader = new BasicVertexShader(vertexShaderSource.name,
+        _vertexShader = new BasicVertexShader(vertexShaderSource.name,
                                                                 vertexShaderSource.src);
-        BasicFragmentShader *fragmentShader = new BasicFragmentShader(fragmentShaderSource.name,
+        _fragmentShader = new BasicFragmentShader(fragmentShaderSource.name,
                                                                       fragmentShaderSource.src);
-        if(!_programID || !vertexShader->isCompiled() || !fragmentShader->isCompiled())
+        if(!_programID || !_vertexShader->isCompiled() || !_fragmentShader->isCompiled())
         {
             LOGE("Couldn't load material %s", materialName);
             _ready = false;
         }
         else
         {
-            GLCALL(glAttachShader(_programID, vertexShader->getID()));
-            GLCALL(glAttachShader(_programID, fragmentShader->getID()));
+            GLCALL(glAttachShader(_programID, _vertexShader->getID()));
+            GLCALL(glAttachShader(_programID, _fragmentShader->getID()));
             GLCALL(glLinkProgram(_programID));
             GLint programLinked;
             glGetProgramiv(_programID, GL_LINK_STATUS, &programLinked);
@@ -81,8 +81,8 @@ public:
                 _ready = false;
             }
         }
-        GLCALL(glDeleteShader(vertexShader->getID()));
-        GLCALL(glDeleteShader(fragmentShader->getID()));
+        GLCALL(glDeleteShader(_vertexShader->getID()));
+        GLCALL(glDeleteShader(_fragmentShader->getID()));
     }
 
     ~Material(){
@@ -164,6 +164,8 @@ private:
     unsigned int _programID;
     bool _ready;
     std::unordered_map<std::string, GLint> _uniformLocationCache;
+    BasicVertexShader* _vertexShader;
+    BasicFragmentShader* _fragmentShader;
 };
 
 

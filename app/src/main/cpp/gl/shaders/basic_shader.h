@@ -40,7 +40,7 @@ public:
         }
         else
         {
-            LOGE("Compiled Shader %s type %d", name, type);
+            LOGD("Compiled Shader %s type %d", name, type);
         }
 
     }

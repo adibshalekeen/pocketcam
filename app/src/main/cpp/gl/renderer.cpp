@@ -9,10 +9,10 @@ void Renderer::draw(VertexArray& va,
                     IndexBuffer& ib,
                     Material& mat){
     clear();
-    va.bind();
-    ib.bind();
     mat.bind();
     mat.bindUniformValues();
+    va.bind();
+    ib.bind();
     unsigned int dims[2];
     mat.getDimensions(dims);
     GLCALL(glViewport(0, 0, dims[0], dims[1]));

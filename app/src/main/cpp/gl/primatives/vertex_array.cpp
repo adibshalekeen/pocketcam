@@ -6,7 +6,7 @@
 #include "vertex_array.h"
 #include "utils.h"
 
-VertexArray::VertexArray() : _ID(0) {
+VertexArray::VertexArray() : _ID(0){
     GLCALL(glGenVertexArrays(1, &_ID));
 }
 
@@ -26,6 +26,7 @@ void VertexArray::unbind() const{
 void VertexArray::setLayout(VertexBuffer &vb, BufferLayout layout) {
     // Define the specified vertex buffer layout
     std::vector<BufferLayoutElement> definitions = layout.getDefinitions();
+    bind();
     vb.bind();
     unsigned int offset = 0;
     for(unsigned int i = 0; i < definitions.size(); ++i)

@@ -33,7 +33,7 @@ const char* FRAGMENT_SHADER_CODE = R"(
         void main()
         {
             //FragColor = texture(texSampler, texPos);
-            FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+            FragColor = vec4(viewSize.x, texPos.y, 1.0, 1.0);
         }
     )";
 const ShaderSource VERTEX_SHADER_SOURCE = { VERTEX_SHADER_NAME, VERTEX_SHADER_CODE };
@@ -51,10 +51,10 @@ static void orthographicProjection(float mvp[16],
     float tb = t - b;
     float fn = f - n;
     mvp[0] = 2 / rl;
-    mvp[12] = (r + l) / rl;
+    mvp[12] = -(r + l) / rl;
 
     mvp[5] = 2 / tb;
-    mvp[13] = (t + b) / tb;
+    mvp[13] = -(t + b) / tb;
 
     mvp[10] = -2 / fn;
     mvp[14] = -(f + n) / fn;
@@ -76,13 +76,6 @@ CameraPreviewMaterial::CameraPreviewMaterial(unsigned int textureID)  : Material
             0, 0, 0, 1.0f
     };
     _textureID = textureID;
-    //Configure camera frame texture
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_EXTERNAL_OES, _textureID);
-    glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     _vertices = new float[] {
             -1, -1, 0, 0, 0,
@@ -144,11 +137,6 @@ void CameraPreviewMaterial::setDimensions(unsigned int width, unsigned int heigh
     {
         orthographicProjection(_mvp, -_aspectRatio, _aspectRatio, -1.0f, 1.0f, -1.0f, 1.0f);
     }
-
-    for(int i = 0; i < 4; ++i)
-    {
-        LOGE("%2.6f %2.6f %2.6f %2.6f", _mvp[i * 4 + 0], _mvp[i * 4 + 1], _mvp[i * 4 + 2], _mvp[i * 4 + 3]);
-    }
 }
 
 void CameraPreviewMaterial::getDimensions(unsigned int dims[2]) const {
@@ -163,6 +151,7 @@ void CameraPreviewMaterial::bindUniformValues() {
         GLCALL(glUniformMatrix4fv(mvpMatrix, 1, false, _mvp));
     }
     GLuint texMatrix = getUniformLocation("texMatrix");
+
     if(texMatrix != -1)
     {
         GLCALL(glUniformMatrix4fv(texMatrix, 1, false, _textureMatrix));
@@ -177,7 +166,15 @@ void CameraPreviewMaterial::bindUniformValues() {
     {
         GLCALL(glUniform2f(viewSize, _width, _height));
     }
+    
+    //Configure camera frame texture
+    GLCALL(glActiveTexture(GL_TEXTURE0));
     GLCALL(glBindTexture(GL_TEXTURE_EXTERNAL_OES, _textureID));
+    GLCALL(glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    GLCALL(glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    GLCALL(glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+    GLCALL(glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+
 }
 
 void CameraPreviewMaterial::setTextureMatrix(float *textureMatrix) {

@@ -66,7 +66,7 @@ Java_com_ashaleke_pocketcam_ui_CameraRenderer_setTextureMatrix(JNIEnv *env,
         return;
     }
 
-    LOGE("Setting texture transformaton matrix");
+    LOGD("Setting texture transformaton matrix");
     float textureMatrix[16];
     float* JNImatrix = env->GetFloatArrayElements(matrix, NULL);
     for(int i=0; i < matLen; ++i)
