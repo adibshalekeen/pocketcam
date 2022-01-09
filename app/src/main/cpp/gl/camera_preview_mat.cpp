@@ -33,13 +33,7 @@ const char* FRAGMENT_SHADER_CODE = R"(
 
         void main()
         {
-            if(gl_FragCoord.x / screenSize.x < 0.5) {
-                FragColor = texture(texSampler, texPos);
-            }
-            else {
-                FragColor = texture(texSampler, texPos);
-            }
-//            FragColor = vec4(gl_FragCoord.x / screenSize.x, gl_FragCoord.y / screenSize.y, 0, 1);
+            FragColor = texture(texSampler, texPos);
         }
     )";
 const ShaderSource VERTEX_SHADER_SOURCE = { VERTEX_SHADER_NAME, VERTEX_SHADER_CODE };
@@ -69,6 +63,8 @@ static void orthographicProjection(float mvp[16],
 CameraPreviewMaterial::CameraPreviewMaterial(unsigned int textureID)  : Material(MATERIAL_NAME,
                                                                                  VERTEX_SHADER_SOURCE,
                                                                                  FRAGMENT_SHADER_SOURCE){
+    _textureID = textureID;
+
     _layout = new BufferLayout();
     // x y z
     _layout->push<GLfloat>(3);
@@ -81,7 +77,6 @@ CameraPreviewMaterial::CameraPreviewMaterial(unsigned int textureID)  : Material
             0, 0, 1.0f, 0,
             0, 0, 0, 1.0f
     };
-    _textureID = textureID;
 
     _vertices = new float[] {
             -1, -1, 0, 0, 0,
@@ -126,7 +121,7 @@ BufferLayout* CameraPreviewMaterial::getLayout() const {
 void CameraPreviewMaterial::setDimensions(unsigned int width, unsigned int height) {
     _width = width;
     _height = height;
-    _aspectRatio = width > height ? 1.0f * width / height : 1.0f * height / width;
+    _aspectRatio = width > height ? 1.0f * height / width : 1.0f * width / height;
 
     _mvp = new float[] {
         1.0f, 0, 0, 0,
@@ -151,14 +146,12 @@ void CameraPreviewMaterial::getDimensions(unsigned int dims[2]) const {
 }
 
 void CameraPreviewMaterial::bindUniformValues() {
-
     //Configure camera frame texture
     GLCALL(glActiveTexture(GL_TEXTURE0));
     GLCALL(glBindTexture(GL_TEXTURE_EXTERNAL_OES, _textureID));
     GLCALL(glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     GLCALL(glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-    GLCALL(glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-    GLCALL(glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+
     GLuint texSampler = getUniformLocation("texSampler");
     if(texSampler != -1)
     {
