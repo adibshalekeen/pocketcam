@@ -125,47 +125,20 @@ Java_com_ashaleke_pocketcam_NDKCamera_getCameraSensorOrientation(JNIEnv *env,
  *   start camera preview
  */
 extern "C" JNIEXPORT void JNICALL
-Java_com_ashaleke_pocketcam_NDKCamera_onPreviewSurfaceCreated(JNIEnv *env,
-                                  jobject instance,
-                                  jlong ndkCameraObj,
-                                  jobject surface) {
+Java_com_ashaleke_pocketcam_NDKCamera_setPreviewSurface(JNIEnv *env,
+                                                        jobject instance,
+                                                        jlong ndkCameraObj,
+                                                        jobject surface) {
     ASSERT(ndkCameraObj && (jlong)pEngineObj == ndkCameraObj,
     "NativeObject should not be null Pointer");
     CameraAppEngine *pApp = reinterpret_cast<CameraAppEngine *>(ndkCameraObj);
-    pApp->CreateCameraSession(surface);
-    pApp->StartPreview(true);
-}
-
-/**
- * OnPreviewSurfaceDestroyed()
- *   Notification to native camera that java TextureView is destroyed
- *   Native camera would:
- *      * stop preview
- */
-extern "C" JNIEXPORT void JNICALL
-Java_com_ashaleke_pocketcam_NDKCamera_onPreviewSurfaceDestroyed(JNIEnv *env,
-                                    jobject instance,
-                                    jlong ndkCameraObj,
-                                    jobject surface) {
-    CameraAppEngine *pApp = reinterpret_cast<CameraAppEngine *>(ndkCameraObj);
-    ASSERT(ndkCameraObj && pEngineObj == pApp,
-    "NativeObject should not be null Pointer");
-    jclass cls = env->FindClass("android/view/Surface");
-    jmethodID toString =
-            env->GetMethodID(cls, "toString", "()Ljava/lang/String;");
-
-    jstring destroyObjStr =
-            reinterpret_cast<jstring>(env->CallObjectMethod(surface, toString));
-    const char *destroyObjName = env->GetStringUTFChars(destroyObjStr, nullptr);
-
-    jstring appObjStr = reinterpret_cast<jstring>(
-            env->CallObjectMethod(pApp->GetSurfaceObject(), toString));
-    const char *appObjName = env->GetStringUTFChars(appObjStr, nullptr);
-
-    ASSERT(!strcmp(destroyObjName, appObjName), "object Name MisMatch");
-
-    env->ReleaseStringUTFChars(destroyObjStr, destroyObjName);
-    env->ReleaseStringUTFChars(appObjStr, appObjName);
-
-    pApp->StartPreview(false);
+    if(surface)
+    {
+        pApp->CreateCameraSession(surface);
+        pApp->StartPreview(true);
+    }
+    else
+    {
+        pApp->StartPreview(false);
+    }
 }

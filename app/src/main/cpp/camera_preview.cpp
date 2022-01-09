@@ -20,7 +20,6 @@ CameraPreview::CameraPreview(unsigned int texID) {
     _ib->bind();
     _ib->setData(_cameraPreviewMaterial->getIndices(),
              _cameraPreviewMaterial->getNumIndices());
-
 }
 
 void CameraPreview::onSurfaceChanged(unsigned int w, unsigned int h) {

@@ -43,6 +43,9 @@ android {
 
     ndkPath "C:/Users/ashal/AppData/Local/Android/Ndk"
 
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 dependencies {

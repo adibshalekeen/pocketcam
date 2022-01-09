@@ -8,18 +8,7 @@ import com.ashaleke.pocketcam.ui.listeners.CameraSurfaceAvailableListener
 
 class CameraView(context: Context?,
                  attrs: AttributeSet?) : GLSurfaceView(context, attrs) {
-    var surfaceAvailableListener: TextureView.SurfaceTextureListener? = null
-    var surfaceAvailable : Boolean = false
-
-    val cameraSurfaceAvailableListener : CameraSurfaceAvailableListener =
-        object : CameraSurfaceAvailableListener {
-            override fun onSurfaceAvailable() {
-                surfaceAvailable = true
-                notifySurfaceAvailable()
-            }
-        }
-
-    var cameraRenderer : CameraRenderer = CameraRenderer(cameraSurfaceAvailableListener)
+    var cameraRenderer : CameraRenderer = CameraRenderer()
 
     init {
         setEGLContextClientVersion(3)
@@ -31,19 +20,11 @@ class CameraView(context: Context?,
         cameraRenderer.invalidateTextureMatrix()
     }
 
-    fun setOnSurfaceAvailableListener(listener : TextureView.SurfaceTextureListener)
-    {
-        surfaceAvailableListener = listener
-        if(surfaceAvailable)
-        {
-            notifySurfaceAvailable()
-        }
+    fun setCameraSurfaceAvailableListener(listener : CameraSurfaceAvailableListener) {
+        cameraRenderer.cameraSurfaceAvailableListener = listener
     }
 
-    private fun notifySurfaceAvailable()
-    {
-        surfaceAvailableListener?.onSurfaceTextureAvailable(cameraRenderer.surfaceTexture,
-            getWidth(),
-            getHeight())
+    fun setBufferSize(width : Int, height : Int) {
+        cameraRenderer.surfaceTexture.setDefaultBufferSize(width, height);
     }
 }
