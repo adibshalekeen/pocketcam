@@ -11,11 +11,12 @@ import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
 import com.ashaleke.pocketcam.ui.listeners.CameraSurfaceAvailableListener
+import java.util.*
 
 /**
  * Renderer used to draw camera frames to CameraView GLSurfaceView
  * */
-class CameraRenderer(val surfaceAvailableListener : CameraSurfaceAvailableListener) : GLSurfaceView.Renderer {
+class CameraRenderer() : GLSurfaceView.Renderer {
     // Logcat tag
     val TAG = Constants.APP_TAG + ":CameraRenderer"
 
@@ -37,6 +38,16 @@ class CameraRenderer(val surfaceAvailableListener : CameraSurfaceAvailableListen
     // Thread lock protecting frameAvailable
     val FRAME_LOCK = Object()
 
+    var surfaceTextureCreated : Boolean = false
+    var cameraSurfaceAvailableListener: CameraSurfaceAvailableListener? = null
+        set(listener) {
+            if(surfaceTextureCreated)
+            {
+                listener?.created(surface)
+            }
+            field = listener
+        }
+
     override fun onSurfaceCreated(p0: GL10?, p1: EGLConfig?) {
         var textures : IntArray = IntArray(1)
         GLES30.glGenTextures(1, textures, 0)
@@ -49,30 +60,37 @@ class CameraRenderer(val surfaceAvailableListener : CameraSurfaceAvailableListen
                 frameAvailable = true
             }
         }
-
         surface = Surface(surfaceTexture)
 
-        Log.e(TAG, "Renderer calling on surface created")
-        onSurfaceCreated(textures[0], surface)
         textureMatrixUpdateRequired = true
-        surfaceAvailableListener.onSurfaceAvailable()
+        surfaceTextureCreated = true
+
+        onSurfaceCreated(textures[0], surface)
+        cameraSurfaceAvailableListener?.run{
+            this.created(surface)
+        }
     }
 
     override fun onSurfaceChanged(p0: GL10?, width: Int, height: Int) {
         onSurfaceChanged(width, height)
+        cameraSurfaceAvailableListener?.run{
+            this.resized(width, height)
+        }
     }
 
     override fun onDrawFrame(p0: GL10?) {
-        synchronized(FRAME_LOCK)
-        {
-            if(frameAvailable)
-            {
+        var frame : Boolean = false
+        synchronized(FRAME_LOCK) {
+            frame = frameAvailable
+        }
+        if(frame) {
+            synchronized(FRAME_LOCK) {
                 surfaceTexture.updateTexImage()
                 setTextureMatrix()
-                frameAvailable = true
+                frameAvailable = false
             }
-            onDrawFrame()
         }
+        onDrawFrame()
     }
 
     fun invalidateTextureMatrix()
@@ -93,6 +111,7 @@ class CameraRenderer(val surfaceAvailableListener : CameraSurfaceAvailableListen
         if(updateRequired)
         {
             surfaceTexture.getTransformMatrix(texMatrix)
+            Log.e("POCKETCAM", "TEX MTX ${Arrays.toString(texMatrix)}")
             setTextureMatrix(texMatrix)
             synchronized(FRAME_LOCK)
             {
@@ -100,6 +119,8 @@ class CameraRenderer(val surfaceAvailableListener : CameraSurfaceAvailableListen
             }
         }
     }
+
+
     external fun onSurfaceCreated(textureId: Int, surface: Surface)
     external fun onSurfaceChanged(width: Int, height: Int)
     external fun onDrawFrame()

@@ -11,14 +11,14 @@ const char* VERTEX_SHADER_CODE = R"(
         precision mediump float;
         layout(location = 0) in vec3 vpos;
         layout(location = 1) in vec2 screenPos;
-        out vec2 texPos;
         uniform mat4 texMatrix;
         uniform mat4 mvp;
+        out vec2 texPos;
 
         void main()
         {
-            texPos = (texMatrix * vec4(screenPos.x, screenPos.y, 0, 1.0)).xy;
-            gl_Position = mvp * vec4(vpos, 1.0);
+            texPos = (texMatrix * vec4(screenPos.xy, 0, 1.0)).xy;
+            gl_Position = mvp * vec4(vpos.xyz, 1.0);
         }
     )";
 const char* FRAGMENT_SHADER_NAME = "Camera Preview Fragment Shader";
@@ -27,13 +27,19 @@ const char* FRAGMENT_SHADER_CODE = R"(
         #extension GL_OES_EGL_image_external_essl3: require
         precision mediump float;
         in vec2 texPos;
-        out vec4 FragColor;
         uniform samplerExternalOES texSampler;
-        uniform vec2 viewSize;
+        uniform vec2 screenSize;
+        out vec4 FragColor;
+
         void main()
         {
-            //FragColor = texture(texSampler, texPos);
-            FragColor = vec4(viewSize.x, texPos.y, 1.0, 1.0);
+            if(gl_FragCoord.x / screenSize.x < 0.5) {
+                FragColor = texture(texSampler, texPos);
+            }
+            else {
+                FragColor = texture(texSampler, texPos);
+            }
+//            FragColor = vec4(gl_FragCoord.x / screenSize.x, gl_FragCoord.y / screenSize.y, 0, 1);
         }
     )";
 const ShaderSource VERTEX_SHADER_SOURCE = { VERTEX_SHADER_NAME, VERTEX_SHADER_CODE };
@@ -131,11 +137,11 @@ void CameraPreviewMaterial::setDimensions(unsigned int width, unsigned int heigh
 
     if(width > height)
     {
-        orthographicProjection(_mvp, -1.0f, 1.0f, -_aspectRatio, _aspectRatio, -1.0f, 1.0f);
+        orthographicProjection(_mvp, -_aspectRatio, _aspectRatio, -1.0f, 1.0f, -1.0f, 1.0f);
     }
     else
     {
-        orthographicProjection(_mvp, -_aspectRatio, _aspectRatio, -1.0f, 1.0f, -1.0f, 1.0f);
+        orthographicProjection(_mvp, -1.0f, 1.0f, -_aspectRatio, _aspectRatio, -1.0f, 1.0f);
     }
 }
 
@@ -145,38 +151,39 @@ void CameraPreviewMaterial::getDimensions(unsigned int dims[2]) const {
 }
 
 void CameraPreviewMaterial::bindUniformValues() {
-    GLuint mvpMatrix = getUniformLocation("mvp");
-    if(mvpMatrix != -1)
-    {
-        GLCALL(glUniformMatrix4fv(mvpMatrix, 1, false, _mvp));
-    }
-    GLuint texMatrix = getUniformLocation("texMatrix");
 
-    if(texMatrix != -1)
-    {
-        GLCALL(glUniformMatrix4fv(texMatrix, 1, false, _textureMatrix));
-    }
-//    GLuint texSampler = getUniformLocation("texSampler");
-//    if(texSampler != -1)
-//    {
-//        GLCALL(glUniform1i(texSampler, 0));
-//    }
-    GLuint viewSize = getUniformLocation("viewSize");
-    if(viewSize != -1)
-    {
-        GLCALL(glUniform2f(viewSize, _width, _height));
-    }
-    
     //Configure camera frame texture
     GLCALL(glActiveTexture(GL_TEXTURE0));
     GLCALL(glBindTexture(GL_TEXTURE_EXTERNAL_OES, _textureID));
     GLCALL(glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     GLCALL(glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-    GLCALL(glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    GLCALL(glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+    GLCALL(glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+    GLCALL(glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+    GLuint texSampler = getUniformLocation("texSampler");
+    if(texSampler != -1)
+    {
+        GLCALL(glUniform1i(texSampler, 0));
+    }
 
+    GLuint mvpMatrix = getUniformLocation("mvp");
+    if(mvpMatrix != -1)
+    {
+        GLCALL(glUniformMatrix4fv(mvpMatrix, 1, false, _mvp));
+    }
+
+    GLuint texMatrix = getUniformLocation("texMatrix");
+    if(texMatrix != -1)
+    {
+        GLCALL(glUniformMatrix4fv(texMatrix, 1, false, _textureMatrix));
+    }
+
+    GLuint viewSize = getUniformLocation("screenSize");
+    if(viewSize != -1)
+    {
+        GLCALL(glUniform2f(viewSize, _width, _height));
+    }
 }
 
 void CameraPreviewMaterial::setTextureMatrix(float *textureMatrix) {
-    _textureMatrix = textureMatrix;
+    memcpy(_textureMatrix, textureMatrix, sizeof(float) * 16);
 }

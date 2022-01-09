@@ -30,7 +30,7 @@ Java_com_ashaleke_pocketcam_ui_CameraRenderer_onSurfaceChanged(JNIEnv *env,
         return;
     }
 
-    LOGD("Setting surface dimensions %d %d", w, h);
+    LOGE("Setting surface dimensions %d %d", w, h);
     CAMERA_PREVIEW->onSurfaceChanged(w, h);
 }
 
@@ -67,12 +67,7 @@ Java_com_ashaleke_pocketcam_ui_CameraRenderer_setTextureMatrix(JNIEnv *env,
     }
 
     LOGD("Setting texture transformaton matrix");
-    float textureMatrix[16];
-    float* JNImatrix = env->GetFloatArrayElements(matrix, NULL);
-    for(int i=0; i < matLen; ++i)
-    {
-        textureMatrix[i] = JNImatrix[i];
-    }
-
-    CAMERA_PREVIEW->setTextureMatrix(textureMatrix);
+    float* texMatrix = env->GetFloatArrayElements(matrix, NULL);
+    CAMERA_PREVIEW->setTextureMatrix(texMatrix);
+    env->ReleaseFloatArrayElements(matrix, texMatrix, 0);
 }
