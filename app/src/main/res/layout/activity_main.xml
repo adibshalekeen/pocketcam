@@ -10,10 +10,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_constraintBottom_toTopOf="@id/preview_layout">
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/hello_blank_fragment" />
     </FrameLayout>
     <FrameLayout
         android:id="@+id/preview_layout"
