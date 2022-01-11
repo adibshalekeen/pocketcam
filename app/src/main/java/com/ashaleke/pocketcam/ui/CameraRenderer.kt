@@ -4,14 +4,12 @@ import android.graphics.SurfaceTexture
 import android.opengl.GLES11Ext.GL_TEXTURE_EXTERNAL_OES
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
-import android.util.Log
 import android.view.Surface
 import com.ashaleke.pocketcam.Constants
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
 import com.ashaleke.pocketcam.ui.listeners.CameraSurfaceAvailableListener
-import java.util.*
 
 /**
  * Renderer used to draw camera frames to CameraView GLSurfaceView
@@ -111,7 +109,6 @@ class CameraRenderer() : GLSurfaceView.Renderer {
         if(updateRequired)
         {
             surfaceTexture.getTransformMatrix(texMatrix)
-            Log.e("POCKETCAM", "TEX MTX ${Arrays.toString(texMatrix)}")
             setTextureMatrix(texMatrix)
             synchronized(FRAME_LOCK)
             {

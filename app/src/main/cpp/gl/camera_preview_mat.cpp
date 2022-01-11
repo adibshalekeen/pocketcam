@@ -28,7 +28,6 @@ const char* FRAGMENT_SHADER_CODE = R"(
         precision mediump float;
         in vec2 texPos;
         uniform samplerExternalOES texSampler;
-        uniform vec2 screenSize;
         out vec4 FragColor;
 
         void main()
@@ -170,11 +169,11 @@ void CameraPreviewMaterial::bindUniformValues() {
         GLCALL(glUniformMatrix4fv(texMatrix, 1, false, _textureMatrix));
     }
 
-    GLuint viewSize = getUniformLocation("screenSize");
-    if(viewSize != -1)
-    {
-        GLCALL(glUniform2f(viewSize, _width, _height));
-    }
+//    GLuint viewSize = getUniformLocation("screenSize");
+//    if(viewSize != -1)
+//    {
+//        GLCALL(glUniform2f(viewSize, _width, _height));
+//    }
 }
 
 void CameraPreviewMaterial::setTextureMatrix(float *textureMatrix) {

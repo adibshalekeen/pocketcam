@@ -1,7 +1,6 @@
 package com.ashaleke.pocketcam.ui
 
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -28,7 +27,6 @@ class CameraFragment(var cameraSurfaceListener : CameraSurfaceAvailableListener)
     }
 
     fun setBufferSize(width : Int, height: Int) {
-        Log.e("PocketCam", "SETTING BUFFER SIZE ${width} ${height}")
         binding.cameraView.setBufferSize(width, height)
     }
 }
