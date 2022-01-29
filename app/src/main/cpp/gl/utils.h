@@ -14,11 +14,11 @@ void inline GLClearError()
     while (glGetError() != GL_NO_ERROR);
 }
 
-bool inline GLCheckError(char *fn)
+bool inline GLCheckError(std::string fn)
 {
     std::stringstream stringStream;
     stringStream << "Error executing ";
-    stringStream << fn;
+    stringStream << fn.c_str();
     stringStream << "\n";
     while (GLenum error = glGetError())
     {

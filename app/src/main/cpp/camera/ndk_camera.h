@@ -7,12 +7,15 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
 
 #include <camera/NdkCameraManager.h>
 #include <camera/NdkCameraError.h>
 #include <camera/NdkCameraDevice.h>
 #include <camera/NdkCameraMetadataTags.h>
 #include <camera/common/camera_utils.h>
+
+#include <native_debug.h>
 
 #include "display_dimension.h"
 
@@ -29,7 +32,7 @@ enum class CaptureSessionState {
     MAX_STATE
 };
 
-typedef struct CameraSettings {
+struct CameraSettings {
     int32_t direction;
     int32_t orientation;
     float focusDistance[3];
@@ -38,7 +41,7 @@ typedef struct CameraSettings {
     int32_t sensitivity[3];
 };
 
-typedef struct ImageFormat {
+struct ImageFormat {
     int32_t format;
     DisplayDimension display;
 };
@@ -60,7 +63,7 @@ typedef void (*onCameraRequestState)();
  * Struct of callbacks for camera manager to get information
  * about camera status
  */
-typedef struct CameraStatusCallback {
+struct CameraStatusCallback {
     onCameraDisconnected disconnectedCallback;
     onCameraError errorCallback;
     onCameraConnected connectedCallback;
@@ -80,86 +83,85 @@ struct CameraRequestInfo {
     ACaptureRequest* captureRequest;
     ACameraDevice_request_template captureRequestTemplate;
     int sequenceId;
-}
+};
+
 class NDKCamera {
 public:
     NDKCamera(ACameraManager* manager,
-              ACameraDevice* device,
               std::string cameraId,
               CameraStatusCallback callback);
     ~NDKCamera();
-    void setCameraDevice(ACameraDevice* cameraDevice);
-    void signalError(std::string id, int err) {
-        std::string id(ACameraDevice_getId(dev));
+    void signalError(int err) {
+        std::string id(ACameraDevice_getId(_cameraDevice));
         std::stringstream errorString;
         _connected = false;
-        LOGI("Error encountered in camera %s. Error Id %#x", id.c_str, err);
+        LOGI("Error encountered in camera %s. Error Id %#x", id.c_str(), err);
         
         switch(err) {
             case ERROR_CAMERA_IN_USE:
-                stringStream << "Camera is already in use";
+                errorString << "Camera is already in use";
                 break;
             case ERROR_CAMERA_SERVICE:
-                stringStream << "Camera service encountered a fatal error";
+                errorString << "Camera service encountered a fatal error";
                 break;
             case ERROR_CAMERA_DEVICE:
-                stringStream << "Camera device encountered a fatal error";
+                errorString << "Camera device encountered a fatal error";
                 break;
             case ERROR_CAMERA_DISABLED:
-                stringStream << "Camera is disabled due to device policy";
+                errorString << "Camera is disabled due to device policy";
                 break;
             case ERROR_MAX_CAMERAS_IN_USE:
-                stringStream << "Reached maximum number of open cameras";
+                errorString << "Reached maximum number of open cameras";
                 break;
             default:
-                stringStream << "Unknown camera error";
+                errorString << "Unknown camera error";
                 break;
         }
-        stringStream << std::endl;
-        LOGE("%s", stringStream.str().c_str());
+        errorString << std::endl;
+        LOGE("%s", errorString.str().c_str());
         _callback.errorCallback(id, err);
     }
-    void signalDisconnected(std::string id) {
-        ACameraDevice_close(dev);
+    void signalDisconnected() {
+        ACameraDevice_close(_cameraDevice);
         _connected = false;
-        std::string id(ACameraDevice_getId(dev));
+        std::string id(ACameraDevice_getId(_cameraDevice));
         _callback.disconnectedCallback(id);
     }
     void createSession(ANativeWindow* previewWindow,
                        ANativeWindow* jpgWindow,
                        ANativeWindow* rawWindow);
     void sessionStateCallback(ACameraCaptureSession* session, CaptureSessionState state) {
-        _callback.cameraSessionStateCallback(session, state);
+        if(_callback.cameraSessionStateCallback) {
+            _callback.cameraSessionStateCallback(session, state);
+        }
     }
+    void startPreview();
 private:
     ACameraDevice* _cameraDevice;
     ACameraMetadata* _metaData;
     CameraSettings _cameraSettings;
     CameraStatusCallback _callback;
-    std::vector<CaptureRequestInfo> _requestInfo;
+    std::vector<CameraRequestInfo> _requestInfo;
     ACaptureSessionOutputContainer* _sessionOutputContainer;
     ACameraCaptureSession* _captureSession;
     CaptureSessionState _captureSessionState;
     std::vector<ImageFormat> _imageFormats;
-    char _cameraId;
+    std::string _cameraId;
     bool _connected;
-    void onDisconnected(void* ctx, ACameraDevice* dev) {
-       reinterpret_case<NDKCamera*>(ctx)->signalDisconnected(id);
+    static void onDisconnected(void* ctx, ACameraDevice* dev) {
+       reinterpret_cast<NDKCamera*>(ctx)->signalDisconnected();
     }
-    void onError(void* ctx, ACameraDevice* dev, int err) {
-        reinterpret_case<NDKCamera*>(ctx)->signalError(id, err);
+    static void onError(void* ctx, ACameraDevice* dev, int err) {
+        reinterpret_cast<NDKCamera*>(ctx)->signalError(err);
     }
-    void onSessionClosed(void* ctx, ACameraCaptureSession* session) {
-        LOGI("Session closed %p", session);
+    static void onSessionClosed(void* ctx, ACameraCaptureSession* session) {
         reinterpret_cast<NDKCamera*>(ctx)->sessionStateCallback(session, CaptureSessionState::CLOSED);
     }
-    void onSessionReady(void* ctx, ACameraCaptureSession* session) {
-        LOGI("Session ready %p", session);
-        reinterpret_cast<NDKCamera>(ctx)->sessionStateCallback(session, CaptureSessionState::READY);
+    static void onSessionReady(void* ctx, ACameraCaptureSession* session) {
+        reinterpret_cast<NDKCamera*>(ctx)->sessionStateCallback(session, CaptureSessionState::READY);
     }
-    void onSessionActive(void* ctx, ACameraCaptureSession* session) {
-        LOGI("Session active %p", session);
-        reinterpret_cast<NDKCamera>(ctx)->sessionStateCallback(session, CaptureSessionState::ACTIVE);
+    static void onSessionActive(void* ctx, ACameraCaptureSession* session) {
+        reinterpret_cast<NDKCamera*>(ctx)->sessionStateCallback(session, CaptureSessionState::ACTIVE);
     }
     bool getMetadataCharacteristic(uint32_t tag, ACameraMetadata_const_entry* val) {
         camera_status_t status = ACameraMetadata_getConstEntry(
@@ -170,13 +172,13 @@ private:
         if(status == ACAMERA_OK) {
             return true;
         }
-        if(status == ACAMERA_ERROR_IVALID_PARAMETER) {
+        if(status == ACAMERA_ERROR_INVALID_PARAMETER) {
             LOGE("Attempting to extract property %d from null metadata", tag);
         }
         if(status == ACAMERA_ERROR_METADATA_NOT_FOUND) {
             LOGE("Input metadata doesn't contain input tag %d", tag);
         }
-        return false
+        return false;
     }
     void loadImageFormats();
     void loadExposure();

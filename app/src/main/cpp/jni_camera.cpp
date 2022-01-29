@@ -31,8 +31,7 @@
  * Application object:
  *   the top level camera application object, maintained by native code only
  */
-CameraAppEngine *pEngineObj = nullptr;
-
+NDKCameraManager* CAMERA_MANAGER = nullptr;
 /**
  * createCamera() Create application instance and NDK camera object
  * @param  width is the texture view window width
@@ -51,6 +50,8 @@ Java_com_ashaleke_pocketcam_NDKCamera_createCamera(JNIEnv *env,
                        jobject instance,
                        jint width,
                        jint height) {
+    CAMERA_MANAGER = new NDKCameraManager(env, instance);
+    return reinterpret_cast<jlong>(CAMERA_MANAGER);
 }
 
 /**
@@ -79,6 +80,11 @@ extern "C" JNIEXPORT jobject JNICALL
 Java_com_ashaleke_pocketcam_NDKCamera_getMinimumCompatiblePreviewSize(JNIEnv *env,
                                           jobject instance,
                                           jlong ndkCameraObj) {
+    jclass cls = env->FindClass("android/util/Size");
+    jobject previewSize = env->NewObject(cls, env->GetMethodID(cls, "<init>", "(II)V"),
+                                         640,
+                                         480);
+    return previewSize;
 }
 
 /**
@@ -90,6 +96,7 @@ extern "C" JNIEXPORT jint JNICALL
 Java_com_ashaleke_pocketcam_NDKCamera_getCameraSensorOrientation(JNIEnv *env,
                                      jobject instance,
                                      jlong ndkCameraObj) {
+    return 5;
 }
 
 /**
@@ -103,4 +110,8 @@ Java_com_ashaleke_pocketcam_NDKCamera_setPreviewSurface(JNIEnv *env,
                                                         jobject instance,
                                                         jlong ndkCameraObj,
                                                         jobject surface) {
+    LOGE("INITIALIZING MANAGER");
+    NDKCameraManager* manager = reinterpret_cast<NDKCameraManager*>(ndkCameraObj);
+    LOGE("SETTING PS");
+    manager->setPreviewSurface(surface);
 }

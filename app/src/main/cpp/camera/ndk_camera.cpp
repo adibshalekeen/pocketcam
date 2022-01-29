@@ -4,61 +4,85 @@
 
 #include "ndk_camera.h"
 
-void NDKCamera::NDKCamera(ACameraManager* manager,
-                          ACameraDevice* device,
-                          std::string cameraId,
-                          CameraStatusCallback callback) : _connected(false){
-    _cameraDevice = device;
+NDKCamera::NDKCamera(ACameraManager* manager,
+                     std::string cameraId,
+                     CameraStatusCallback callback) : _connected(false){
     _callback = callback;
     _requestInfo.resize(CAPTURE_REQUEST_COUNT);
     memset(_requestInfo.data(), 0, _requestInfo.size() * sizeof(_requestInfo[0]));
     static ACameraDevice_stateCallbacks cameraDeviceListener = {
         .context = this,
-        .onDisconnected = ::onDisconnected,
-        .onError = ::onError,
+        .onDisconnected = onDisconnected,
+        .onError = onError,
     };
     CALL_MGR(openCamera(manager,
-                        cameraId.c_str(),
-                        &cameraDeviceListener,
-                        &_cameraDevice));
+                             cameraId.c_str(),
+                             &cameraDeviceListener,
+                             &_cameraDevice));
     _connected = true;
     CALL_MGR(getCameraCharacteristics(manager, cameraId.c_str(), &_metaData));
-    loadExposure();
-    loadSensitivity();
-    loadFocusDistance();
-    loadDigitalZoom();
-    loadWhiteBalance();
-    loadImageFormats();
+     loadExposure();
+     loadSensitivity();
+     loadFocusDistance();
+     loadDigitalZoom();
+//     loadWhiteBalance();
+//     loadImageFormats();
 }
 
 void NDKCamera::createSession(ANativeWindow* previewWindow,
                               ANativeWindow* jpgWindow,
                               ANativeWindow* rawWindow) {
+    LOGE("SETTING PREVIEW");
     _requestInfo[PREVIEW_REQUEST_IDX].outputWindow = previewWindow;
-    _requestInfo[PREVIEW_REQUEST_IDX].captureRequestTemplate = TEMPLATE_MANUAL;
-    _requestInfo[JPG_CAPTURE_REQUEST_IDX].outputWindow = jpgWindow;
-    _requestInfo[JPG_CAPTURE_REQUEST_IDX].captureRequestTemplate = TEMPLATE_MANUAL;
-    _requestInfo[RAW_CAPTURE_REQUEST_IDX].outputWindow = rawWindow;
-    _requestInfo[RAW_CAPTURE_REQUEST_IDX].captureRequestTemplate = TEMPLATE_MANUAL;
+    _requestInfo[PREVIEW_REQUEST_IDX].captureRequestTemplate = TEMPLATE_PREVIEW;
+    LOGE("INDEXED");
+//    _requestInfo[JPG_CAPTURE_REQUEST_IDX].outputWindow = jpgWindow;
+//    _requestInfo[JPG_CAPTURE_REQUEST_IDX].captureRequestTemplate = TEMPLATE_MANUAL;
+//    _requestInfo[RAW_CAPTURE_REQUEST_IDX].outputWindow = rawWindow;
+//    _requestInfo[RAW_CAPTURE_REQUEST_IDX].captureRequestTemplate = TEMPLATE_MANUAL;
     CALL_CONTAINER(create(&_sessionOutputContainer));
-    for(CameraRequestInfo info : _requestInfo) {
-        ANativeWindow_acquire(info.outputWindow);
-        CALL_OUTPUT(create(info.outputWindow, &info.sessionOutput));
-        CALL_CONTAINER(add(_sessionOutputContainer, info.sessionOutput));
-        CALL_TARGET(create(info.outputWindow, &info.sessionOutputTarget));
-        CALL_DEV(createCaptureRequest(_cameraDevice, info.template, &info.captureRequest));
-        CALL_REQUEST(addTarget(info.captureRequest, info.sessionOutputTarget));
+    LOGE("CREATED OUTPUT CON");
+    for(int i=0; i < _requestInfo.size(); i++) {
+        CameraRequestInfo* info = &_requestInfo[i];
+        if(info->outputWindow) {
+            LOGE("PROCESSING %d", i);
+            LOGE("PROCESSING");
+            ANativeWindow_acquire(info->outputWindow);
+            LOGE("PROCESSING OUTPUTWINDOW");
+            CALL_OUTPUT(create(info->outputWindow, &info->sessionOutput));
+            LOGE("PROCESSING OUTPUTWINDOW");
+            CALL_CONTAINER(add(_sessionOutputContainer, info->sessionOutput));
+            LOGE("PROCESSING OUTPUT CONTAINER");
+            CALL_TARGET(create(info->outputWindow, &info->sessionOutputTarget));
+            LOGE("PROCESSING OUTPUT CONTAINER TARGET");
+            CALL_DEV(createCaptureRequest(_cameraDevice,
+                                               info->captureRequestTemplate,
+                                               &info->captureRequest));
+            LOGE("PROCESSING CAPTURE REQ %p", &info->captureRequest);
+            CALL_REQUEST(addTarget(info->captureRequest, info->sessionOutputTarget));
+        }
     }
     ACameraCaptureSession_stateCallbacks sessionStateCallbacks = {
         .context = this,
-        .onClosed = ::onSessionClosed,
-        .onReady = ::onSessionReady,
-        .onActive = ::onSessionActive,
+        .onClosed = onSessionClosed,
+        .onReady = onSessionReady,
+        .onActive = onSessionActive,
     };
+    LOGE("CREATING CAP SESSION");
     CALL_DEV(createCaptureSession(_cameraDevice,
-                                  _sessionOutputContainer,
-                                  &sessionStateCallback,
-                                  &_captureSession));
+                                       _sessionOutputContainer,
+                                       &sessionStateCallbacks,
+                                       &_captureSession));
+}
+
+void NDKCamera::startPreview() {
+    LOGE("STARTING CAMERA PREVIEW %p", _requestInfo[PREVIEW_REQUEST_IDX].captureRequest);
+    CALL_SESSION(setRepeatingRequest(_captureSession,
+                                          nullptr,
+                                          1,
+                                          &_requestInfo[PREVIEW_REQUEST_IDX].captureRequest,
+                                          nullptr));
+    LOGE("STARTED");
 }
 
 void NDKCamera::loadImageFormats(){
@@ -68,13 +92,13 @@ void NDKCamera::loadImageFormats(){
     ));
 
     for(int i = 0; i < formats.count; ++i) {
-        int32_t input = entry.data.i32[i + 3];
+        int32_t input = formats.data.i32[i + 3];
         if (input) continue;
-        int32_t format = entry.data.i32[i + 0];
-        DisplayDimension disp(entry.data.i32[i + 1], entry.data.i32[i + 2]);
-        _formats.push_back({
+        int32_t format = formats.data.i32[i + 0];
+        DisplayDimension disp(formats.data.i32[i + 1], formats.data.i32[i + 2], 0);
+        _imageFormats.push_back({
             .format = format,
-            .display = display,
+            .display = disp,
         });
     }
 }
@@ -88,6 +112,7 @@ void NDKCamera::loadExposure() {
     _cameraSettings.exposure[MIN] = exposureMin;
     _cameraSettings.exposure[MAX] = exposureMax;
     _cameraSettings.exposure[CURRENT] = exposureMin + (0.2 * (exposureMax - exposureMin));
+    LOGE("EXPOSURE %d %d %d", _cameraSettings.exposure[MIN], _cameraSettings.exposure[MAX], _cameraSettings.exposure[CURRENT]);
 }
 
 void NDKCamera::loadSensitivity() {
@@ -106,17 +131,17 @@ void NDKCamera::loadFocusDistance() {
     _cameraSettings.focusDistance[MIN] = focusDistance.data.f[0];
     _cameraSettings.focusDistance[MAX] = focusDistance.data.f[1];
     if (!getMetadataCharacteristic(ACAMERA_LENS_FOCUS_DISTANCE, &focusDistance)) return;
-    _cameraSettings.focusDistance[CURRENT] = focusDistance.data.float32[0];
+    _cameraSettings.focusDistance[CURRENT] = focusDistance.data.f[0];
 }
 
 void NDKCamera::loadDigitalZoom() {
     ACameraMetadata_const_entry digitalZoom;
-    if (!getMetadataCharacteristic(ACAMERA_CONTROL_ZOOM_RATIO_RANGE, &focusDistance)) return;
+    if (!getMetadataCharacteristic(ACAMERA_CONTROL_ZOOM_RATIO_RANGE, &digitalZoom)) return;
     _cameraSettings.digitalZoom[MIN] = digitalZoom.data.f[0];
     _cameraSettings.digitalZoom[MAX] = digitalZoom.data.f[1];
     _cameraSettings.digitalZoom[CURRENT] = 1.0;
 }
 
-void NDKCamera::~NDKCamera() {
+NDKCamera::~NDKCamera() {
 
 }

@@ -51,7 +51,7 @@ public:
         return (w_ == other.w_ && h_ == other.h_ && portrait_ == other.portrait_);
     }
     DisplayDimension operator-(DisplayDimension& other) {
-        DisplayDimension delta(w_ - other.w_, h_ - other.h_);
+        DisplayDimension delta(w_ - other.w_, h_ - other.h_, _orientation);
         return delta;
     }
     void Flip(void) { portrait_ = !portrait_; }

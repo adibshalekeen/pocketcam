@@ -26,6 +26,7 @@
 #define CALL_CAMERA(func)                                             \
   {                                                                   \
     camera_status_t status = func;                                    \
+    LOGE("%s STATUS %p", #func, status);                              \
     ASSERT(status == ACAMERA_OK, "%s call failed with code: %#x, %s", \
            __FUNCTION__, status, GetErrorStr(status));                \
   }
