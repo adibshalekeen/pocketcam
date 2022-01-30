@@ -37,7 +37,7 @@ void NDKCamera::createSession(ANativeWindow* previewWindow,
     _requestInfo[PREVIEW_REQUEST_IDX].captureRequestTemplate = TEMPLATE_PREVIEW;
     LOGE("INDEXED");
     _requestInfo[JPG_CAPTURE_REQUEST_IDX].outputWindow = jpgWindow;
-    _requestInfo[JPG_CAPTURE_REQUEST_IDX].captureRequestTemplate = TEMPLATE_MANUAL;
+    _requestInfo[JPG_CAPTURE_REQUEST_IDX].captureRequestTemplate = TEMPLATE_STILL_CAPTURE;
 //    _requestInfo[RAW_CAPTURE_REQUEST_IDX].outputWindow = rawWindow;
 //    _requestInfo[RAW_CAPTURE_REQUEST_IDX].captureRequestTemplate = TEMPLATE_MANUAL;
     CALL_CONTAINER(create(&_sessionOutputContainer));
