@@ -39,4 +39,8 @@ class NDKCameraManager(val cameraManager : CameraManager,
                 it
             }
         }
+
+    fun takePhoto() {
+        camera.takePhoto()
+    }
 }

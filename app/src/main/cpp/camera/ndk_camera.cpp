@@ -36,8 +36,8 @@ void NDKCamera::createSession(ANativeWindow* previewWindow,
     _requestInfo[PREVIEW_REQUEST_IDX].outputWindow = previewWindow;
     _requestInfo[PREVIEW_REQUEST_IDX].captureRequestTemplate = TEMPLATE_PREVIEW;
     LOGE("INDEXED");
-//    _requestInfo[JPG_CAPTURE_REQUEST_IDX].outputWindow = jpgWindow;
-//    _requestInfo[JPG_CAPTURE_REQUEST_IDX].captureRequestTemplate = TEMPLATE_MANUAL;
+    _requestInfo[JPG_CAPTURE_REQUEST_IDX].outputWindow = jpgWindow;
+    _requestInfo[JPG_CAPTURE_REQUEST_IDX].captureRequestTemplate = TEMPLATE_MANUAL;
 //    _requestInfo[RAW_CAPTURE_REQUEST_IDX].outputWindow = rawWindow;
 //    _requestInfo[RAW_CAPTURE_REQUEST_IDX].captureRequestTemplate = TEMPLATE_MANUAL;
     CALL_CONTAINER(create(&_sessionOutputContainer));
@@ -85,6 +85,63 @@ void NDKCamera::startPreview() {
     LOGE("STARTED");
 }
 
+static void sessionCapture_onFailed(void* ctx,
+                                    ACameraCaptureSession* session,
+                                    ACaptureRequest* request,
+                                    ACameraCaptureFailure* failure) {
+    std::thread captureThreadFailed(&NDKCamera::onCaptureFailed,
+                                    static_cast<NDKCamera*>(ctx),
+                                    session,
+                                    request,
+                                    failure);
+    captureThreadFailed.detach();
+}
+
+static void sessionCapture_onSequenceEnd(void* ctx,
+                                         ACameraCaptureSession* session,
+                                         int sequenceId,
+                                         int64_t frameNumber) {
+    std::thread sequenceEndThread(&NDKCamera::onCaptureSequenceEnd,
+                                  static_cast<NDKCamera*>(ctx),
+                                  session,
+                                  sequenceId,
+                                  frameNumber);
+    sequenceEndThread.detach();
+}
+
+static void sessionCapture_onSequenceAborted(void* ctx,
+                                             ACameraCaptureSession* session,
+                                             int sequenceId) {
+    std::thread sequenceAbortedThread(&NDKCamera::onCaptureSequenceEnd,
+                                      static_cast<NDKCamera*>(ctx),
+                                      session,
+                                      sequenceId,
+                                      -1);
+    sequenceAbortedThread.detach();
+}
+
+void NDKCamera::takePhoto() {
+    LOGE("TAKING PHOTO");
+    ACameraCaptureSession_captureCallbacks listener = {
+            .context = this,
+            .onCaptureStarted = nullptr,
+            .onCaptureProgressed = nullptr,
+            .onCaptureCompleted = nullptr,
+            .onCaptureFailed = sessionCapture_onFailed,
+            .onCaptureSequenceCompleted = sessionCapture_onSequenceEnd,
+            .onCaptureSequenceAborted = sessionCapture_onSequenceAborted,
+            .onCaptureBufferLost = nullptr,
+    };
+    if(_captureSession) {
+        ACameraCaptureSession_stopRepeating(_captureSession);
+        CALL_SESSION(capture(_captureSession,
+                                  &listener,
+                                  1,
+                                  &_requestInfo[JPG_CAPTURE_REQUEST_IDX].captureRequest,
+                                  nullptr))
+    }
+}
+
 void NDKCamera::loadImageFormats(){
     ACameraMetadata_const_entry formats;
     CALL_METADATA(getConstEntry(
@@ -95,10 +152,10 @@ void NDKCamera::loadImageFormats(){
         int32_t input = formats.data.i32[i + 3];
         if (input) continue;
         int32_t format = formats.data.i32[i + 0];
-        DisplayDimension disp(formats.data.i32[i + 1], formats.data.i32[i + 2], 0);
         _imageFormats.push_back({
-            .format = format,
-            .display = disp,
+            .width = static_cast<uint32_t>(formats.data.i32[i+1]),
+            .height = static_cast<uint32_t>(formats.data.i32[i + 2]),
+            .format = static_cast<uint32_t>(format),
         });
     }
 }

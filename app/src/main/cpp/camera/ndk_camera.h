@@ -6,6 +6,7 @@
 #define POCKETCAM_NDK_CAMERA_H
 
 #include <string>
+#include <thread>
 #include <vector>
 #include <sstream>
 
@@ -18,6 +19,7 @@
 #include <native_debug.h>
 
 #include "display_dimension.h"
+#include "image_reader.h"
 
 enum SettingsIndex {
     MIN=0,
@@ -39,11 +41,6 @@ struct CameraSettings {
     float digitalZoom[3];
     int64_t exposure[3];
     int32_t sensitivity[3];
-};
-
-struct ImageFormat {
-    int32_t format;
-    DisplayDimension display;
 };
 
 enum PREVIEW_INDICES {
@@ -136,6 +133,19 @@ public:
         }
     }
     void startPreview();
+    void takePhoto();
+    void onCaptureFailed(ACameraCaptureSession* session,
+                         ACaptureRequest* request,
+                         ACameraCaptureFailure* failure) {
+        if(request == _requestInfo[JPG_CAPTURE_REQUEST_IDX].captureRequest) {
+            startPreview();
+        }
+    }
+    void onCaptureSequenceEnd(ACameraCaptureSession* session,
+                              int sequenceId,
+                              int64_t frameNumber) {
+        startPreview();
+    }
 private:
     ACameraDevice* _cameraDevice;
     ACameraMetadata* _metaData;
@@ -163,6 +173,7 @@ private:
     static void onSessionActive(void* ctx, ACameraCaptureSession* session) {
         reinterpret_cast<NDKCamera*>(ctx)->sessionStateCallback(session, CaptureSessionState::ACTIVE);
     }
+
     bool getMetadataCharacteristic(uint32_t tag, ACameraMetadata_const_entry* val) {
         camera_status_t status = ACameraMetadata_getConstEntry(
             _metaData,

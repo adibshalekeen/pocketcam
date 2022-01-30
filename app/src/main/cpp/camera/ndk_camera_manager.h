@@ -11,6 +11,7 @@
 #include <android/native_window.h>
 
 #include "ndk_camera.h"
+#include "image_reader.h"
 
 class NDKCameraManager {
 public:
@@ -18,10 +19,12 @@ public:
     ~NDKCameraManager();
     void setPreviewSurface(jobject surface);
     void startPreview();
+    void takePhoto();
 private:
     JNIEnv* _env;
     jobject _javaInstance;
     jobject _surface;
+    ImageReader* _JPEGReader;
     ACameraManager* _cameraManager;
     NDKCamera* _camera;
     std::string enumerateCameras();

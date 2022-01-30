@@ -115,3 +115,14 @@ Java_com_ashaleke_pocketcam_NDKCamera_setPreviewSurface(JNIEnv *env,
     LOGE("SETTING PS");
     manager->setPreviewSurface(surface);
 }
+
+/**
+ * Take Photo
+ * */
+ extern "C" JNIEXPORT void JNICALL
+ Java_com_ashaleke_pocketcam_NDKCamera_takePhoto(JNIEnv* env,
+                                                 jobject instance,
+                                                 jlong ndkCameraObj) {
+     NDKCameraManager* manager = reinterpret_cast<NDKCameraManager*>(ndkCameraObj);
+     manager->takePhoto();
+ }

@@ -22,20 +22,7 @@
 #include <camera/NdkCameraManager.h>
 #include "native_debug.h"
 #include "camera_utils.h"
-
-#define UKNOWN_TAG "UNKNOW_TAG"
-#define MAKE_PAIR(val) std::make_pair(val, #val)
-template <typename T>
-const char* GetPairStr(T key, std::vector<std::pair<T, const char*>>& store) {
-  typedef typename std::vector<std::pair<T, const char*>>::iterator iterator;
-  for (iterator it = store.begin(); it != store.end(); ++it) {
-    if (it->first == key) {
-      return it->second;
-    }
-  }
-  LOGW("(%#08x) : UNKNOWN_TAG for %s", key, typeid(store[0].first).name());
-  return UKNOWN_TAG;
-}
+#include "common_utils.h"
 
 /*
  * camera_status_t error translation

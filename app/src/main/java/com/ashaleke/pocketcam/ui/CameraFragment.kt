@@ -29,4 +29,8 @@ class CameraFragment(var cameraSurfaceListener : CameraSurfaceAvailableListener)
     fun setBufferSize(width : Int, height: Int) {
         binding.cameraView.setBufferSize(width, height)
     }
+
+    fun setOnCaptureButtonClicked(listener : View.OnClickListener) {
+        binding.captureBtn.setOnClickListener(listener)
+    }
 }

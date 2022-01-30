@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Display
 import android.view.Surface
+import android.view.View
 import android.view.WindowMetrics
 import android.widget.RelativeLayout
 import androidx.core.app.ActivityCompat
@@ -45,6 +46,10 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
                     cameraFragment.setBufferSize(this.width, this.height)
                     resizeView(this.width, this.height, screenOrientation)
                 }
+                val captureListener = View.OnClickListener {
+                    ndkCameraManager?.takePhoto()
+                }
+                cameraFragment.setOnCaptureButtonClicked(captureListener)
             }
 
             override fun resized(width: Int, height: Int) {

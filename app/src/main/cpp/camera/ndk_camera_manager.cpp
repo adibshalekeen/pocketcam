@@ -2,6 +2,7 @@
 // Created by ashal on 2022-01-11.
 //
 
+#include <media/NdkImageReader.h>
 #include "ndk_camera_manager.h"
 
 NDKCameraManager::NDKCameraManager(JNIEnv* env, jobject instance) : _env(env),
@@ -20,6 +21,8 @@ NDKCameraManager::NDKCameraManager(JNIEnv* env, jobject instance) : _env(env),
     _camera = new NDKCamera(_cameraManager,
                             cid,
                             cb);
+    ImageFormat jpgImage{640, 480, AIMAGE_FORMAT_JPEG};
+    _JPEGReader = new ImageReader(jpgImage, AIMAGE_FORMAT_JPEG, nullptr, nullptr);
 }
 
 NDKCameraManager::~NDKCameraManager() {
@@ -32,7 +35,9 @@ NDKCameraManager::~NDKCameraManager() {
 void NDKCameraManager::setPreviewSurface(jobject surface) {
     _surface = _env->NewGlobalRef(surface);
     LOGE("SET SURFACE GLOBAL");
-    _camera->createSession(ANativeWindow_fromSurface(_env, _surface), nullptr, nullptr);
+    _camera->createSession(ANativeWindow_fromSurface(_env, _surface),
+                           _JPEGReader->getNativeWindow(),
+                           nullptr);
     _camera->startPreview();
 }
 
@@ -65,4 +70,8 @@ std::string NDKCameraManager::enumerateCameras() {
       ACameraMetadata_free(metadataObj);
   }
     return nullptr;
+}
+
+void NDKCameraManager::takePhoto() {
+    _camera->takePhoto();
 }

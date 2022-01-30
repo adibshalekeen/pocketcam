@@ -20,9 +20,16 @@ class NDKCamera(val displayWidth : Int, val displayHeight : Int) {
         }
     }
 
+    fun takePhoto() {
+        handle?.run{
+            takePhoto(this)
+        }
+    }
+
     private external fun createCamera(displayWidth : Int, displayHeight: Int) : Long
     private external fun deleteCamera(handle : Long)
     private external fun setPreviewSurface(handle: Long, surface : Surface)
+    private external fun takePhoto(handle : Long)
     private external fun getMinimumCompatiblePreviewSize(handle : Long) : Size
     private external fun getCameraSensorOrientation(handle: Long) : Int
 }
